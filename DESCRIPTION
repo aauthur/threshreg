@@ -1,13 +1,18 @@
 Package: threshreg
-Title: What the Package Does (One Line, Title Case)
+Title: Threshold-Censored Negative Binomial Regression
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R:
+    person("Adam", "Authur", , "aauthur@tamu.edu",
+           role = c("aut", "cre"))
+Description: Data is often subject to reporting rules that hide
+    observations below a specified threshold. When this threshold is known,
+    information about the unobserved observations can be incorporated rather than discarded. 
+    This package fits negative binomial regression models that account for threshold censoring, with
+    additional functionality for working with network data.
 License: GPL (>= 3)
 Config/roxygen2/version: 8.1.1
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-Suggests: 
+Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

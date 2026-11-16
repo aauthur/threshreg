@@ -1,0 +1,42 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file. -->
+
+# threshreg
+
+## Overview
+
+`threshreg` is an R package for fitting negative binomial regression
+models on data subject to a known lower reporting threshold. Rather than
+discarding censored observations or naively interpreting them, the
+package incorporates the information that their underlying counts fall
+below the threshold into the likelihood function. The package supports
+both tabular and network data, with the latter represented using
+matrices of observed counts and covariates.
+
+## Installation
+
+The development version of `threshreg` can be installed from GitHub:
+
+``` r
+install.packages("remotes")
+remotes::install_github("aauthur/threshreg")
+```
+
+## Development Status
+
+The goal is to complete by the 24th: argument validation, associated
+testing, and creation of a basic simulation to illustrate the effect of
+censorship on estimated coefficients. The simulation will later be
+converted into a test case where we will show the modified algorithm
+results in covariate estimates closer to the true values.
+
+After these preliminary steps are completed, I will implement the
+likelihood.R helper and censor.R functions first, then the core loop for
+tabular/network data in thresreg.R, ending with methods.R. network.R is
+for potential network helper functions, but may be discarded. Testing
+will be carried out in parallel with development.
+
+## AI Use
+
+ChatGPT in browser was used to help code ROxygen function descriptions
+based on informal descriptions.

@@ -2,18 +2,25 @@
 % Please edit documentation in R/threshreg-package.R
 \docType{package}
 \name{threshreg-package}
-\alias{threshreg}
 \alias{threshreg-package}
-\title{threshreg: What the Package Does (One Line, Title Case)}
+\title{threshreg: Threshold-Censored Negative Binomial Regression}
 \description{
-What the package does (one paragraph).
+Data is often subject to reporting rules that hide observations below a specified threshold. When this threshold is known, information about the unobserved observations can be incorporated rather than discarded. This package fits negative binomial regression models that account for threshold censoring, with additional functionality for working with network data.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/aauthur/threshreg}
+  \item Report bugs at \url{https://github.com/aauthur/threshreg/issues}
+}
+
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Adam Authur \email{aauthur@tamu.edu}
 
 Authors:
 \itemize{
-  \item First Last \email{first.last@example.com}
+  \item Adam Authur \email{aauthur@tamu.edu}
 }
 
 }

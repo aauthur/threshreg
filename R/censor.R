@@ -12,7 +12,12 @@
 #'
 #' @export
 censor_matrix <- function(M, lower) {
-
+  if (!is.matrix(M) || !is.numeric(lower)) {
+    stop("Invalid arguments.")
+  }
+  #1 if M_ij >= lower, 0 otherwise.
+  mask <- (M >= lower)*1
+  return(M*mask)
 }
 
 
@@ -33,5 +38,16 @@ censor_matrix <- function(M, lower) {
 #'
 #' @export
 censor_data <- function(data, response, lower) {
+  if (!is.data.frame(data) || !is.numeric(lower) || !is.character(response)) {
+    stop("Invalid argument types.")
+  }
+  if (is.null(data[[response]])) {
+    stop("Specified response not present in data.")
+  }
 
+  mask <- (data[[response]] >= lower)*1
+  data[[response]] <- data[[response]]*mask
+  return(data)
 }
+
+

@@ -39,3 +39,5 @@ After these preliminary steps are completed, I will implement the likelihood.R h
 ## AI Use
 
 ChatGPT in browser was used to help code ROxygen function descriptions based on informal descriptions.
+
+ChatGPT in browser was used to create the plots in test-threshreg.R.

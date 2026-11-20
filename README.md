@@ -40,3 +40,5 @@ will be carried out in parallel with development.
 
 ChatGPT in browser was used to help code ROxygen function descriptions
 based on informal descriptions.
+
+ChatGPT in browser was used to create the plots in test-threshreg.R.

@@ -1,5 +1,5 @@
 #Simulation of effect on covariates:
-library(MASS)
+
 #Generate some random covariates
 X1 <- matrix(data=rnorm(1000, 0, 2), nrow = 100)
 X2 <- matrix(data=rnorm(1000, 0, 3), nrow = 100)
@@ -17,11 +17,11 @@ Y <- matrix(
   nrow = 100
 )
 
-fit_uncensored <- glm.nb(as.vector(Y) ~ as.vector(X1) + as.vector(X2))
+fit_uncensored <- MASS::glm.nb(as.vector(Y) ~ as.vector(X1) + as.vector(X2))
 
 censored_Y <- censor_matrix(Y, 4)
 
-fit_censored <- glm.nb(as.vector(censored_Y) ~ as.vector(X1) + as.vector(X2))
+fit_censored <- MASS::glm.nb(as.vector(censored_Y) ~ as.vector(X1) + as.vector(X2))
 
 
 
@@ -95,11 +95,11 @@ for (i in c(1:N)) {
   censored_Y <- censor_matrix(Y, threshold)
 
 
-  fit_uncensored <- glm.nb(
+  fit_uncensored <- MASS::glm.nb(
     as.vector(Y) ~ as.vector(X1) + as.vector(X2)
   )
 
-  fit_censored <- glm.nb(
+  fit_censored <- MASS::glm.nb(
     as.vector(censored_Y) ~ as.vector(X1) + as.vector(X2)
   )
 

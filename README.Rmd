@@ -31,13 +31,15 @@ remotes::install_github("aauthur/threshreg")
 
 ## Development Status
 
-The goal is to complete by the 24th: argument validation, associated testing, and creation of a basic simulation to illustrate the effect of censorship on estimated coefficients. The simulation will later be converted into a test case where we will show the modified algorithm results in covariate estimates closer to the true values. 
+The goal is to complete the core functionality of the package by the 24th, and then use the remainder of the time to work on preparing the presentation and constructing interesting and illuminative examples. 
 
-After these preliminary steps are completed, I will implement the likelihood.R helper and censor.R functions first, then the core loop for tabular/network data in thresreg.R, ending with methods.R. network.R is for potential network helper functions, but may be discarded. Testing will be carried out in parallel with development. 
+Currently, I have implemented the censor.R functions and associated testing, the modified negative log likelihood helper that is central to the package's logic, a working prototype of the threshreg fit function on tabular data, and I have implemented some simulations in test-threshreg.R (these will likely need to be moved to a more appropriate place). I still need to implement the methods.R functions to make threshreg function objects analogous to other regression packages, the network analog of the tabular function, and clean everything up.
+
+After the fundamental logic and testing has been implemented, I will work on some visual examples (analogous to what is currently in the test-threshreg.R file). These will become part of my presentation.
 
 
 ## AI Use
 
-ChatGPT in browser was used to help code ROxygen function descriptions based on informal descriptions.
+ChatGPT in browser was used to help code ROxygen function descriptions based on informal descriptions, to create the plots in test-threshreg.R, and to help with argument validation for core threshreg function on tabular data. 
 
-ChatGPT in browser was used to create the plots in test-threshreg.R.
+Google search AI was used to explain the syntax for optim function utilized in threshreg.R for the core tabular function. 

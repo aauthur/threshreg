@@ -22,12 +22,12 @@
   mu <- exp(X %*% beta)
 
   #Get indices of uncensored/censored values.
-  uncensored <- !is.na(z) & z >= lower
-  censored <- is.na(z) | z == 0
+  uncensored <- !is.na(z) & (lower == 0 | z >= lower)
+  censored <- lower > 0 & (is.na(z) | z == 0)
 
   #Compute likelihood of uncensored values.
   likelihood_uncensored <- sum(dnbinom(z[uncensored], size = exp(log_r), mu = mu[uncensored], log = TRUE))
-  likelihood_censored <- sum(pnbinom((lower - 1), size = exp(log_r), mu = mu[censored], log.p = TRUE))
+  likelihood_censored <- sum(pnbinom(ceiling(lower - 1), size = exp(log_r), mu = mu[censored], log.p = TRUE))
 
   return(-likelihood_censored - likelihood_uncensored)
 }

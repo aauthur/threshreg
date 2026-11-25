@@ -8,7 +8,7 @@ for (i in c(1:100)) {
   z1 <- rep(3, 100)
   lower1 <- 2
 
-  ll1 <- -sum(dnbinom(z, mu = as.vector(exp(X1 %*% theta1[1:2])), size = exp(theta1[3]), log = TRUE))
+  ll1 <- -sum(dnbinom(z1, mu = as.vector(exp(X1 %*% theta1[1:2])), size = exp(theta1[3]), log = TRUE))
   expect_equal(.nll_nb(theta1, X1, z1, lower1), ll1)
 
   #Half observations censored (test 0 and NA censorship)

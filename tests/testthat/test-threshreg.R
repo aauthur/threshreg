@@ -1,81 +1,16 @@
-#Simulation of effect on covariates:
-
-#Generate some random covariates
-X1 <- matrix(data=rnorm(1000, 0, 2), nrow = 100)
-X2 <- matrix(data=rnorm(1000, 0, 3), nrow = 100)
-
-#Simulate response
-true_beta <- c(log(4), 0.3, 0.2)
-true_r <- 6
-
-eta <- true_beta[1] + true_beta[2]*X1 + true_beta[3]*X2
-
-mu <- exp(eta)
-
-Y <- matrix(
-  data = rnbinom(1000, size = true_r, mu = as.vector(mu)),
-  nrow = 100
-)
-
-fit_uncensored <- MASS::glm.nb(as.vector(Y) ~ as.vector(X1) + as.vector(X2))
-
-censored_Y <- censor_matrix(Y, 4)
-
-fit_censored <- MASS::glm.nb(as.vector(censored_Y) ~ as.vector(X1) + as.vector(X2))
-
-df <- data.frame(
-  "Y" = as.vector(censored_Y),
-  "X1" = as.vector(X1),
-  "X2" = as.vector(X2)
-)
-
-fit_threshreg <- threshreg(Y ~ X1 + X2, df, 4)
+#I want to run two essential tests: 1. that in the absence of censoring our fitted model
+#agrees with MASS negative binomial fit, and 2. That in the presence of censoring, our fitted
+#model works better, that is results in coefficient estimates closer to the true coefficients.
 
 
-n <- 100
 
-newdata <- data.frame(
-  X1 = rnorm(n, 0.3, 1),
-  X2 = rnorm(n, 0.05, 3)
-)
+test_that("Threshreg agrees with MASS NB fit without censoring.",
+{
 
-new_mu <- exp(true_beta[1] + true_beta[2]*newdata$X1 + true_beta[3]*newdata$X2)
-new_Y <- rnbinom(n, size = true_r, mu = new_mu)
-
-predicted_uncensored <- predict(fit_uncensored, newdata = newdata, type = "response")
-predicted_censored <- predict(fit_censored, newdata = newdata, type = "response")
-
-#Compare out of sample prediction error on true network
-ospe_uncensored <- (1/n)*sum((new_Y - predicted_uncensored)^2)
-ospe_censored <- (1/n)*sum((new_Y - predicted_censored)^2)
-
-#Compare out of sample prediction error on true network AFTER censorship rule is applied:
-new_Y_censored <- as.vector(censor_matrix(as.matrix(new_Y, nrow = 10), 4))
-ospe2_uncensored <- (1/n)*sum((new_Y_censored - predicted_uncensored)^2)
-ospe2_censored <- (1/n)*sum((new_Y_censored - predicted_censored)^2)
-
-#Lesson: censoring biases coefficients and results in worse prediction EVEN on networks that have the
-#same censorship rule applied to them!
-
-
-#Let's run this simulation multiple times to confirm:
 set.seed(42)
 
 #Number of simulations:
-N <- 100
-
-#Measure performance on the estimation of model parameters.
-uncensored_coefficient_mse_vec <- rep(0, N)
-uncensored_dispersion_mse_vec <- rep(0, N)
-censored_coefficient_mse_vec <- rep(0, N)
-censored_dispersion_mse_vec <- rep(0, N)
-
-#OSPE on true network
-ospe_uncensored_vec <- rep(0, N)
-ospe_censored_vec <- rep(0, N)
-#OSPE on an analogously censored network
-ospe2_uncensored_vec <- rep(0, N)
-ospe2_censored_vec <- rep(0, N)
+N <- 50
 
 for (i in c(1:N)) {
   #Here I'm just copying the logic from above, but this time I will use random coefficients and means and stuff to
@@ -88,7 +23,6 @@ for (i in c(1:N)) {
   #Simulate response
   true_beta <- c(log(runif(1, 8, 12)), rnorm(1, 0, sd= 0.2), rnorm(1, 0, sd= 0.2))
   true_r <- runif(1, 2, 8)
-  threshold <- sample(3:5, 1)
 
   eta <- true_beta[1] + true_beta[2]*X1 + true_beta[3]*X2
 
@@ -99,281 +33,91 @@ for (i in c(1:N)) {
     nrow = 100
   )
 
-  censored_Y <- censor_matrix(Y, threshold)
-
-
-  fit_uncensored <- MASS::glm.nb(
+  mass_fit <- MASS::glm.nb(
     as.vector(Y) ~ as.vector(X1) + as.vector(X2)
   )
-
-  fit_censored <- MASS::glm.nb(
-    as.vector(censored_Y) ~ as.vector(X1) + as.vector(X2)
-  )
-
-
-  n <- 100
-
-  newdata <- data.frame(
-    X1 = rnorm(n, 0.3, 1),
-    X2 = rnorm(n, 0.05, 3)
-  )
-
-  new_mu <- exp(true_beta[1] + true_beta[2]*newdata$X1 + true_beta[3]*newdata$X2)
-  new_mu_censored <- new_mu
-  new_mu_censored[new_mu_censored < threshold] <- 0
-  new_Y <- rnbinom(n, size = true_r, mu = new_mu)
-
-  #Measurements:
-  # coefficient_mse_vec <- rep(0, 1000)
-  # dispersion_mse_vec <- rep(0, 1000)
-  #
-  # #OSPE on true network
-  # ospe_uncencored_vec <- rep(0, 1000)
-  # ospe_censored_vec <- rep(0, 1000)
-  # #OSPE on an analogously censored network
-  # ospe2_uncencored_vec <- rep(0, 1000)
-  # ospe2_censored_vec <- rep(0, 1000)
-
-  predicted_uncensored <- predict(fit_uncensored, newdata = newdata, type = "response")
-  predicted_censored <- predict(fit_censored, newdata = newdata, type = "response")
-
-  #Coefficient/Dispersion MSE of both fits
-  uncensored_coefficient_mse_vec[i] <- mean((unname(fit_uncensored$coefficients) - true_beta)^2)
-  uncensored_dispersion_mse_vec[i] <- (fit_uncensored$theta - true_r)^2
-  censored_coefficient_mse_vec[i] <- mean((unname(fit_censored$coefficients) - true_beta)^2)
-  censored_dispersion_mse_vec[i] <- (fit_censored$theta - true_r)^2
-
-
-
-  #Compare out of sample prediction error on true network
-  ospe_uncensored_vec[i] <- (1/n)*sum((new_mu - predicted_uncensored)^2)
-  ospe_censored_vec[i] <- (1/n)*sum((new_mu - predicted_censored)^2)
-
-  #Compare out of sample prediction error on true network AFTER censorship rule is applied:
-  new_Y_censored <- new_Y
-  new_Y_censored[new_Y < threshold] <- 0
-
-  ospe2_uncensored_vec[i] <- (1/n)*sum((new_mu_censored - predicted_uncensored)^2)
-  ospe2_censored_vec[i] <- (1/n)*sum((new_mu_censored - predicted_censored)^2)
-
-}
-
-summary(uncensored_coefficient_mse_vec)
-summary(uncensored_dispersion_mse_vec)
-summary(censored_coefficient_mse_vec)
-summary(censored_dispersion_mse_vec)
-
-summary(ospe_uncensored_vec)
-summary(ospe_censored_vec)
-
-summary(ospe2_uncensored_vec)
-summary(ospe2_censored_vec)
-
-
-par(mfrow = c(2, 2))
-
-plot_compare <- function(x, y, title, ylab) {
-  limit <- quantile(c(x, y), 0.95, na.rm = TRUE)
-
-  plot(x, type = "l", col = "blue",
-       main = title, xlab = "Simulation", ylab = ylab,
-       ylim = c(0, limit))
-
-  lines(y, col = "red")
-
-  legend("topright", c("Uncensored", "Naive censored"),
-         col = c("blue", "red"), lty = 1, bty = "n")
-}
-
-plot_compare(uncensored_coefficient_mse_vec, censored_coefficient_mse_vec,
-             "Coefficient MSE", "MSE")
-
-plot_compare(uncensored_dispersion_mse_vec, censored_dispersion_mse_vec,
-             "Theta MSE", "MSE")
-
-plot_compare(ospe_uncensored_vec, ospe_censored_vec,
-             "OSPE (True Counts)", "OSPE")
-
-plot_compare(ospe2_uncensored_vec, ospe2_censored_vec,
-             "OSPE (Censored Counts)", "OSPE")
-
-
-
-
-#I'm essentially going to copy the exact logic from above used to illustrate the difficulty of
-#fitting a regression model on data with a reporting threshold, but now I will add a third variable which is the modified
-#likelihood approach from the package.
-
-set.seed(420)
-
-#Number of simulations:
-N <- 100
-
-#Measure performance on the estimation of model parameters.
-uncensored_coefficient_mse_vec <- rep(0, N)
-uncensored_dispersion_mse_vec <- rep(0, N)
-
-censored_coefficient_mse_vec <- rep(0, N)
-censored_dispersion_mse_vec <- rep(0, N)
-
-threshreg_coefficient_mse_vec <- rep(0, N)
-threshreg_dispersion_mse_vec <- rep(0, N)
-
-
-#OSPE on true network
-ospe_uncensored_vec <- rep(0, N)
-ospe_censored_vec <- rep(0, N)
-ospe_threshreg_vec <- rep(0, N)
-#OSPE on an analogously censored network
-ospe2_uncensored_vec <- rep(0, N)
-ospe2_censored_vec <- rep(0, N)
-ospe2_threshreg_vec <- rep(0, N)
-
-for (i in c(1:N)) {
-  #Here I'm just copying the logic from above, but this time I will use random coefficients and means and stuff to
-  #simulate a variety of settings.
-
-  #Generate some random covariates
-  X1 <- matrix(data=rnorm(1000, 0, 2), nrow = 100)
-  X2 <- matrix(data=rnorm(1000, 0, 3), nrow = 100)
-
-  #Simulate response
-  true_beta <- c(log(runif(1, 8, 12)), rnorm(1, 0, sd= 0.2), rnorm(1, 0, sd= 0.2))
-  true_r <- runif(1, 2, 8)
-  threshold <- sample(3:5, 1)
-
-  eta <- true_beta[1] + true_beta[2]*X1 + true_beta[3]*X2
-
-  mu <- exp(eta)
-
-  Y <- matrix(
-    data = rnbinom(1000, size = true_r, mu = as.vector(mu)),
-    nrow = 100
-  )
-
-  censored_Y <- censor_matrix(Y, threshold)
-
-
-  fit_uncensored <- MASS::glm.nb(
-    as.vector(Y) ~ as.vector(X1) + as.vector(X2)
-  )
-
-  fit_censored <- MASS::glm.nb(
-    as.vector(censored_Y) ~ as.vector(X1) + as.vector(X2)
-  )
-
-  #For now I only have the tabular function implemented, so I'm
-  #just gonna convert these to dataframes to test it to see if it even works (this is actually useful because
-  #it's going to emulate what will ultimately come later as we implement the network function)
 
   df <- data.frame(
-    "Y" = as.vector(censored_Y),
+    "Y" = as.vector(Y),
     "X1" = as.vector(X1),
     "X2" = as.vector(X2)
   )
 
-  fit_threshreg <- threshreg(Y ~ X1 + X2, df, threshold)
+  fit_threshreg <- threshreg(Y ~ X1 + X2, df, lower = 0)
 
-
-  n <- 100
-
-  newdata <- data.frame(
-    X1 = rnorm(n, 0.3, 1),
-    X2 = rnorm(n, 0.05, 3)
-  )
-
-  new_mu <- exp(true_beta[1] + true_beta[2]*newdata$X1 + true_beta[3]*newdata$X2)
-  new_mu_censored <- new_mu
-  new_mu_censored[new_mu_censored < threshold] <- 0
-
-
-
-  predicted_uncensored <- predict(fit_uncensored, newdata = newdata, type = "response")
-  predicted_censored <- predict(fit_censored, newdata = newdata, type = "response")
-  predicted_threshreg <- exp(as.vector(as.matrix(cbind(rep(1, n), newdata$X1, newdata$X2)) %*% as.matrix(fit_threshreg$par[1:3])))
-
-  #Coefficient/Dispersion MSE of both fits
-  uncensored_coefficient_mse_vec[i] <- mean((unname(fit_uncensored$coefficients) - true_beta)^2)
-  uncensored_dispersion_mse_vec[i] <- (fit_uncensored$theta - true_r)^2
-  censored_coefficient_mse_vec[i] <- mean((unname(fit_censored$coefficients) - true_beta)^2)
-  censored_dispersion_mse_vec[i] <- (fit_censored$theta - true_r)^2
-  threshreg_coefficient_mse_vec[i] <- mean((fit_threshreg$par[1:3] - true_beta)^2)
-  threshreg_dispersion_mse_vec[i] <- (exp(fit_threshreg$par[4]) - true_r)^2
-
-
-
-  #Compare out of sample prediction error on true network
-  ospe_uncensored_vec[i] <- (1/n)*sum((new_mu - predicted_uncensored)^2)
-  ospe_censored_vec[i] <- (1/n)*sum((new_mu - predicted_censored)^2)
-  ospe_threshreg_vec[i] <- (1/n)*sum((new_mu - predicted_threshreg)^2)
-
-  #Compare out of sample prediction error on true network AFTER censorship rule is applied:
-  ospe2_uncensored_vec[i] <- (1/n)*sum((new_mu_censored - predicted_uncensored)^2)
-  ospe2_censored_vec[i] <- (1/n)*sum((new_mu_censored - predicted_censored)^2)
-  ospe2_threshreg_vec[i] <- (1/n)*sum((new_mu_censored - predicted_threshreg)^2)
+  #Test that parameters agree between the two fits (beta vec and the size parameter).
+  expect_equal(unname(fit_threshreg$coefficients), unname(mass_fit$coefficients), tolerance = 1e-3)
+  expect_equal(fit_threshreg$size, mass_fit$theta, tolerance = 1e-2)
 
 }
+})
 
-summary(uncensored_coefficient_mse_vec)
-summary(uncensored_dispersion_mse_vec)
-summary(censored_coefficient_mse_vec)
-summary(censored_dispersion_mse_vec)
-summary(threshreg_coefficient_mse_vec)
-summary(threshreg_dispersion_mse_vec)
+test_that("Threshreg improves on MASS NB fit in the pressence of censoring at least 90% of the time.",
+          {
 
-summary(ospe_uncensored_vec)
-summary(ospe_censored_vec)
-summary(ospe_threshreg_vec)
+            set.seed(18)
 
-summary(ospe2_uncensored_vec)
-summary(ospe2_censored_vec)
-summary(ospe2_threshreg_vec)
+            #Number of simulations:
+            N <- 50
+
+            beta_win <- rep(0, N)
+            size_win <- rep(0, N)
+
+            for (i in c(1:N)) {
+              #Here I'm just copying the logic from above, but this time I will use random coefficients and means and stuff to
+              #simulate a variety of settings.
+
+              #Generate some random covariates
+              X1 <- matrix(data=rnorm(1000, 0, 2), nrow = 100)
+              X2 <- matrix(data=rnorm(1000, 0, 3), nrow = 100)
+
+              #Simulate response
+              true_beta <- c(log(runif(1, 8, 12)), rnorm(1, 0, sd= 0.2), rnorm(1, 0, sd= 0.2))
+              true_r <- runif(1, 2, 8)
+              #Need to pick a reasonable threshold otherwise MASS may not converge...
+              #This limitation of a naive fit will be explored in the vignette simulation.
+              threshold <- sample(3:5, 1)
+
+              eta <- true_beta[1] + true_beta[2]*X1 + true_beta[3]*X2
+
+              mu <- exp(eta)
+
+              Y <- matrix(
+                data = rnbinom(1000, size = true_r, mu = as.vector(mu)),
+                nrow = 100
+              )
+
+              censored_Y <- censor_matrix(Y, threshold)
+
+              mass_fit <- MASS::glm.nb(
+                as.vector(censored_Y) ~ as.vector(X1) + as.vector(X2)
+              )
+
+              df <- data.frame(
+                "Y" = as.vector(censored_Y),
+                "X1" = as.vector(X1),
+                "X2" = as.vector(X2)
+              )
+
+              fit_threshreg <- threshreg(Y ~ X1 + X2, df, lower = threshold)
+
+              beta_mse_mass <- sum((unname(mass_fit$coefficients) - true_beta)^2)
+              beta_mse_threshreg <- sum((unname(fit_threshreg$coefficients) - true_beta)^2)
+
+              if (beta_mse_threshreg < beta_mse_mass) {
+                beta_win[i] <- 1
+              }
+
+              size_mse_mass <- (mass_fit$theta - true_r)^2
+              size_mse_threshreg <- (fit_threshreg$size - true_r)^2
+
+              if (size_mse_threshreg < size_mse_mass) {
+                size_win[i] <- 1
+              }
 
 
-
-
-
-plot_compare <- function(x, y, z, title, ylab) {
-  limit <- quantile(c(x, y, z), 0.95, na.rm = TRUE)
-
-  plot(x, type = "l", col = "blue",
-       main = title, xlab = "Simulation", ylab = ylab,
-       ylim = c(0, limit))
-
-  lines(y, col = "red")
-  lines(z, col = "darkgreen")
-
-  legend("topright",
-         c("Uncensored", "Naive censored", "threshreg"),
-         col = c("blue", "red", "darkgreen"),
-         lty = 1, bty = "n")
-}
-
-plot_compare(
-  uncensored_coefficient_mse_vec,
-  censored_coefficient_mse_vec,
-  threshreg_coefficient_mse_vec,
-  "Coefficient MSE", "MSE"
-)
-
-plot_compare(
-  uncensored_dispersion_mse_vec,
-  censored_dispersion_mse_vec,
-  threshreg_dispersion_mse_vec,
-  "Dispersion MSE", "MSE"
-)
-
-plot_compare(
-  ospe_uncensored_vec,
-  ospe_censored_vec,
-  ospe_threshreg_vec,
-  "OSPE (Underlying Mean)", "OSPE"
-)
-
-plot_compare(
-  ospe2_uncensored_vec,
-  ospe2_censored_vec,
-  ospe2_threshreg_vec,
-  "OSPE (Thresholded Mean)", "OSPE"
-)
-
+            }
+            #Expect that threshreg wins at least 90% of the time.
+            expect_gt(sum(beta_win)/N, 0.90)
+            expect_gt(sum(size_win)/N, 0.90)
+          })

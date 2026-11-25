@@ -111,13 +111,38 @@ threshreg <- function(formula, data, lower) {
   #We avoid setting this parameter too low (for r = e^this \in (0, 1), variance increases a lot, so we start modestly).
   theta <- c(theta, log(1.25))
 
-  res <- optim(
+  res <- suppressWarnings(optim(
     par = theta,
     fn = function(par) .nll_nb(par, X = X, z = z, lower = lower),
     method = "BFGS"
+  ))
+
+  #The other warnings were annoying and handled automatically by optim. The only really relevant warning is
+  #when optim fails to converge. 
+  if (res$convergence != 0) {
+    warning("optim did not converge (code ", res$convergence, ").")
+  }
+
+  # Extract fitted parameters
+  beta_hat <- res$par[1:ncol(X)]
+  names(beta_hat) <- colnames(X)
+
+  r_hat <- exp(res$par[ncol(X) + 1])
+
+  # Construct fitted object
+  fit <- list(
+    coefficients = beta_hat,
+    size = r_hat,
+    fitted.values = as.vector(exp(X %*% beta_hat)),
+    logLik = -res$value,
+    convergence = res$convergence,
+    lower = lower,
+    formula = formula
   )
 
-  return(res)
+  class(fit) <- "threshreg"
+
+  return(fit)
 
 }
 

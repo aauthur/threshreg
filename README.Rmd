@@ -42,4 +42,4 @@ After the fundamental logic and testing has been implemented, I will work on som
 
 ChatGPT in browser was used to help code ROxygen function descriptions based on informal descriptions, to create the plots in test-threshreg.R, and to help with argument validation for core threshreg function on tabular data. 
 
-Google search AI was used to explain the syntax for optim function utilized in threshreg.R for the core tabular function. 
+Google search AI was used to explain the syntax for optim function utilized in threshreg.R for the core tabular function, and how to create an object in R and associated methods. 

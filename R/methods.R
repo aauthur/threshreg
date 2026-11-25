@@ -9,25 +9,18 @@
 #'
 #' @export
 print.threshreg <- function(x) {
+  cat("Thresholded Negative Binomial Regression Summary\n\n")
 
+  cat("Coefficient estimates:\n")
+  print(x$coefficients)
+
+  cat("\nSize parameter:", x$size, "\n")
+  cat("Reporting threshold:", x$lower, "\n")
+  cat("Log-likelihood:", x$logLik, "\n")
+  cat("Convergence code:", x$convergence, "\n")
+
+  invisible(x)
 }
-
-#' Summarize a Thresholded Regression Model
-#'
-#' Produces a summary of a fitted thresholded negative
-#' binomial regression model, including parameter estimates,
-#' and convergence information.
-#'
-#' @param object An object of class `threshreg`.
-#'
-#' @return A list containing summary information about
-#'   the fitted model.
-#'
-#' @export
-summary.threshreg <- function(object) {
-
-}
-
 
 
 #' Predict from a Thresholded Regression Model
